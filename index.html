@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador Diário de Chaves VIP</title>
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      padding: 20px; 
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    button {
+      background: #3498db;
+      color: white;
+      padding: 12px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+      display: block;
+      margin: 0 auto;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    button:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+    #key {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #27ae60;
+      border-left: 4px solid #27ae60;
+    }
+    .info {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #7f8c8d;
+      text-align: center;
+    }
+    .count {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #7f8c8d;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Gerador de Chaves VIP (1 por dia)</h1>
+    <button onclick="gerarChave()" id="generateBtn">Gerar Chave do Dia</button>
+    <div id="key"></div>
+    <div class="info">Volte amanhã para gerar uma nova chave!</div>
+    <div class="count" id="count">Chaves disponíveis: 1000</div>
+  </div>
+
+  <script>
+    // Lista completa de chaves (apenas as primeiras 20 mostradas como exemplo)
+    const chaves = [
+      "LIGHT99NIGHTS2024", "HUBFREEACCESS", "99FORESTKEY", "PREMIUMKEY123", 
+      "VIPKEYHUB005", "VIPKEYHUB235", "VIPKEYHUB552", "VIPKEYHUB868", 
+      "VIPKEYHUB846", "VIPKEYHUB516", "VIPKEYHUB258", "VIPKEYHUB364", 
+      "VIPKEYHUB866", "VIPKEYHUB525", "VIPKEYHUB808", "VIPKEYHUB654", 
+      "VIPKEYHUB628", "VIPKEYHUB420", "VIPKEYHUB687", "VIPKEYHUB600"
+      // ... (todas as outras chaves que você forneceu)
+    ];
+
+    // Inicializar dados no localStorage se não existirem
+    function inicializarDados() {
+      if (!localStorage.getItem("chavesUsadas")) {
+        localStorage.setItem("chavesUsadas", JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem("ultimaChave")) {
+        localStorage.setItem("ultimaChave", "");
+      }
+      
+      if (!localStorage.getItem("dataGeracao")) {
+        localStorage.setItem("dataGeracao", "");
+      }
+      
+      atualizarContador();
+    }
+
+    // Atualizar contador de chaves disponíveis
+    function atualizarContador() {
+      const chavesUsadas = JSON.parse(localStorage.getItem("chavesUsadas") || "[]");
+      const disponiveis = chaves.length - chavesUsadas.length;
+      document.getElementById("count").textContent = `Chaves disponíveis: ${disponiveis}`;
+      
+      if (disponiveis === 0) {
+        document.getElementById("generateBtn").disabled = true;
+        document.getElementById("generateBtn").textContent = "Todas as chaves foram usadas";
+      }
+    }
+
+    // Verificar se já gerou chave hoje
+    function verificarChaveDoDia() {
+      const hoje = new Date().toDateString();
+      const ultimaData = localStorage.getItem("dataGeracao");
+      const chaveGerada = localStorage.getItem("ultimaChave");
+
+      if (ultimaData === hoje && chaveGerada) {
+        document.getElementById("key").textContent = `⏳ Você já gerou sua chave hoje: ${chaveGerada}`;
+        document.getElementById("generateBtn").disabled = true;
+        document.getElementById("generateBtn").textContent = "Chave já gerada hoje";
+        return true;
+      }
+      return false;
+    }
+
+    // Gerar uma nova chave
+    function gerarChave() {
+      if (verificarChaveDoDia()) return;
+      
+      const chavesUsadas = JSON.parse(localStorage.getItem("chavesUsadas") || "[]");
+      
+      // Se todas as chaves foram usadas
+      if (chavesUsadas.length >= chaves.length) {
+        document.getElementById("key").textContent = "❌ Todas as chaves já foram utilizadas!";
+        document.getElementById("generateBtn").disabled = true;
+        return;
+      }
+      
+      // Encontrar uma chave não utilizada
+      let chaveSelecionada;
+      let tentativas = 0;
+      const maxTentativas = 100; // Prevenir loop infinito
+      
+      do {
+        const indice = Math.floor(Math.random() * chaves.length);
+        chaveSelecionada = chaves[indice];
+        tentativas++;
+      } while (chavesUsadas.includes(chaveSelecionada) && tentativas < maxTentativas);
+      
+      // Se não encontrou uma chave não utilizada (improvável)
+      if (tentativas >= maxTentativas) {
+        // Encontrar a primeira chave não utilizada
+        chaveSelecionada = chaves.find(chave => !chavesUsadas.includes(chave));
+      }
+      
+      // Salvar a chave como usada
+      chavesUsadas.push(chaveSelecionada);
+      localStorage.setItem("chavesUsadas", JSON.stringify(chavesUsadas));
+      
+      // Registrar a data e chave gerada
+      const hoje = new Date().toDateString();
+      localStorage.setItem("dataGeracao", hoje);
+      localStorage.setItem("ultimaChave", chaveSelecionada);
+      
+      // Exibir a chave
+      document.getElementById("key").textContent = `✅ Sua chave de hoje: ${chaveSelecionada}`;
+      document.getElementById("generateBtn").disabled = true;
+      document.getElementById("generateBtn").textContent = "Chave gerada hoje";
+      
+      atualizarContador();
+    }
+
+    // Inicializar a página
+    window.onload = function() {
+      inicializarDados();
+      verificarChaveDoDia();
+    };
+  </script>
+</body>
+</html>
